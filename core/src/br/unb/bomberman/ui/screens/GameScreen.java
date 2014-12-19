@@ -47,9 +47,6 @@ public class GameScreen extends ScreenAdapter {
 	Rectangle resumeBounds;
 	Rectangle quitBounds;
 	
-	int lastScore;
-	String scoreString;
-	
 	BomberMatchWithUi match;
 	
 	private int state;
@@ -78,14 +75,10 @@ public class GameScreen extends ScreenAdapter {
 		pauseBounds = new Rectangle(320 - 64, 480 - 64, 64, 64);
 		resumeBounds = new Rectangle(160 - 96, 240, 192, 36);
 		quitBounds = new Rectangle(160 - 96, 240 - 36, 192, 36);
-
-		lastScore = 0;
-		scoreString = "0";
 		
 		state = GAME_READY;
 		
 		pauseSystems();
-
 		
 	}
 
@@ -130,24 +123,6 @@ public class GameScreen extends ScreenAdapter {
 				return;
 			}
 		}
-		
-		if (match.score != lastScore) {
-			lastScore = match.score;
-			scoreString = "" + lastScore;
-		}
-		if (match.state == State.WORLD_STATE_NEXT_LEVEL) {
-			game.setScreen(new WinAMatchScreen(game));
-		}
-		if (match.state == State.WORLD_STATE_GAME_OVER) {
-			state = GAME_OVER;
-			if (lastScore >= Settings.highscores[4])
-				scoreString = "NEW HIGHSCORE: " + lastScore;
-			else
-				scoreString = "" + lastScore;
-			pauseSystems();
-			Settings.addScore("Player", lastScore);
-			Settings.save();
-		}
 	}
 
 	private void updatePaused () {
@@ -185,7 +160,6 @@ public class GameScreen extends ScreenAdapter {
 			String nextLevelStageId = "stage";
 			
 			match = new BomberMatchWithUi(game.batch, nextLevelStageId);
-			match.score = lastScore;
 			state = GAME_READY;
 		}
 	}
@@ -240,9 +214,6 @@ public class GameScreen extends ScreenAdapter {
 		game.batch.draw(Assets.p4, 320 - 86, 480 - 56, 20, 24);
 		game.batch.draw(Assets.boxScore, 320 - 60, 480 - 56, 16, 24);
 		
-		Assets.font.setScale(0.6f, 1);
-		Assets.font.draw(game.batch, scoreString, 320 - 196, 480 - 32);
-		
 		match.update();
 	}
 
@@ -263,8 +234,6 @@ public class GameScreen extends ScreenAdapter {
 
 	private void presentGameOver () {
 		game.batch.draw(Assets.gameOver, 160 - 160 / 2, 240 - 96 / 2, 160, 96);
-		float scoreWidth = Assets.font.getBounds(scoreString).width;
-		Assets.font.draw(game.batch, scoreString, 160 - scoreWidth / 2, 480 - 20);
 	}
 	
 	private void pauseSystems() {

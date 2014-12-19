@@ -9,21 +9,17 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import br.unb.bomberman.ui.screens.Assets;
-
 import br.unb.unbomber.GDXGame;
-
 import br.unb.unbomber.core.BaseSystem;
 import br.unb.unbomber.core.EntityManager;
 import br.unb.unbomber.core.Component;
 import br.unb.unbomber.core.Entity;
 import br.unb.unbomber.core.Event;
-
+import br.unb.unbomber.component.Score;
 import br.unb.unbomber.component.Timer;
-
 import br.unb.unbomber.event.DestroyedEvent;
 import br.unb.unbomber.event.GameOverEvent;
 import br.unb.unbomber.event.TimeOverEvent;
-
 import br.unb.unbomber.systems.TimeSystem;
 
 /**
@@ -37,17 +33,21 @@ import br.unb.unbomber.systems.TimeSystem;
  */
 public class HUDSystem extends BaseSystem {
 	
-	TimeSystem system;
-	TimeOverEvent timeOver;
+	SpriteBatch batch;
 	
 	private Entity HUD;
+	
+	TimeSystem sysTime;
+	TimeOverEvent timeOver;
 	private Timer timerHUD;
-	
-	private float lastTime;
 	private String timeString;
-	private float stateTime = 0f;
 	
-	SpriteBatch batch;
+	ScoreSystem sysScore;
+	private Score scoreHUD;
+	private int lastScore;
+	private String scoreString;
+	
+	
 
 	
 	public HUDSystem (EntityManager entityManager,
@@ -59,46 +59,55 @@ public class HUDSystem extends BaseSystem {
 	@Override
 	public void start() {
 		// Inits the time system
-		this.system = new TimeSystem(this.getEntityManager());
+		this.sysTime = new TimeSystem(this.getEntityManager());
+		this.sysScore = new ScoreSystem(this.getEntityManager());
 		
 		this.timeString = "";
+		this.scoreString = "";
+		this.lastScore = 0;
 		
 		// Creation of a HUD entity
 		HUD =  this.getEntityManager().createEntity();
 		// Creation of a component time for HUD entity
-		timerHUD = new Timer(120000, timeOver);
+		timerHUD = new Timer(2200, timeOver);
 		HUD.addComponent(timerHUD);
+		// Creation of a component score for HUD entity
+		scoreHUD = new Score(1);
+		HUD.addComponent(scoreHUD);
+		
 		this.getEntityManager().update(HUD);
-		
-		
 		
 	}
 	
 	@Override
 	public void update() {
-		// Total time
-		this.stateTime = Gdx.graphics.getFramesPerSecond();
 		List<Event> timeOver = this.getEntityManager().getEvents(TimeOverEvent.class);
-		
+		// If the event of time over exist then stop the game (or match)
 		if(timeOver != null)
 		{
 			stop();
 		}
 		
-		// Increase the lastime counted with the time elapsed times the framerate
-		float timeElpsed = this.timerHUD.getElapsedTime() * 31;
-		float min = (long)((timeElpsed / 60000)  % 60) ;
-		float seg = (long)((timeElpsed / 1000) % 60);
+		// Elapsed time is divided with the average of the frame rate to get the time in seconds
+		float timeElpsed = this.timerHUD.getElapsedTime() / 30;
+		float min = (long)(timeElpsed / 60) ;
+		float seg = (long)(timeElpsed % 60);
 		
 		// Modify the string to show on HUD with the new time
-		String minString = String.format("%.0f", min);
-		String segString = String.format("%.0f", seg);
+		String minString = String.format("%02.0f", min);
+		String segString = String.format("%02.0f", seg);
 		
 		this.timeString = minString + ":" + segString;
+		this.scoreString = String.format("%d", this.scoreHUD.getScore());
+		
+		// Scale of the font on HUD
+		Assets.font.setScale(0.6f, 1);
 		
 		// Draw on HUD the time regressively
-		Assets.font.setScale(0.6f, 1);
 		Assets.font.draw(batch, this.timeString , 85, 480 - 28);
+		
+		// Draw on HUD the score of the main player
+		Assets.font.draw(batch, this.scoreString, 252, 480 - 32);
 	}
 	
 	@Override
